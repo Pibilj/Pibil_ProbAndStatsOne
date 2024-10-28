@@ -1,10 +1,13 @@
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Scanner;
 
 public class CardGame
 {
+    Scanner scanner = new Scanner(System.in);
     private ArrayList<Card> deck;
     private ArrayList<Card> hand;
+    private ArrayList<Card> prizeCards;
     private Card onField ;
     private int noPoke_counter = 0;
     private int poke_counter = 0;
@@ -13,6 +16,7 @@ public class CardGame
     public CardGame(){
          deck = new ArrayList<>();
          hand = new ArrayList<>();
+         prizeCards = new ArrayList<>();
          onField = null;
     }
     public void checkDeckSize(){
@@ -95,6 +99,17 @@ public class CardGame
             
         }
     }
+    //add hand back to deck
+    public void newHand(){
+        for(int i = 0; i<=hand.size(); i++){
+            if(!isDeckEmpty()){
+                 deck.add(hand.get(i));
+                 hand.remove(i);
+            }
+            
+        }
+        drawHand();
+    }
     //draw one card
     public void drawCard(){
         Random rng = new Random();
@@ -113,13 +128,14 @@ public class CardGame
     //print hand
     public void printHand(){
         for(int i = 0; i <hand.size(); i++){
-            System.out.print(hand.get(i)+ " ");
+            System.out.print(i + ".) " +hand.get(i)+ " ");
         }
     }
     //check if there is a pokemon in hand
     public boolean checkPokemon(){
         for(Card singleCard : hand){
-            if(singleCard instanceof Charmander){
+            if(singleCard instanceof Charmander ||
+            singleCard instanceof Radiant_Charzard){
                 //System.out.println("I found a Charmander");
                 return true;
             }
@@ -154,6 +170,7 @@ public class CardGame
             }
         }
         if(isRareCandy){
+            //remove only one rare charzard from hand
             for(Card singleCard : hand){
                 if(singleCard instanceof Charzard && count == 0){
                     hand.remove(singleCard instanceof Charzard);
@@ -163,6 +180,7 @@ public class CardGame
             }
             //reset count for rarecandy
             count = 0;
+            //remove only one rare candy card from hand
             for(Card singleCard : hand){
                 if(singleCard instanceof RareCandy && count == 0){
                     hand.remove(singleCard instanceof RareCandy);
@@ -170,8 +188,9 @@ public class CardGame
                 
                 }
             }
+            addToField(new Charzard());
         }
-        onField = new Charzard();
+        
         
         
         
@@ -185,7 +204,7 @@ public class CardGame
         drawHand();
     }
     //use greatBall
-    public void greatBall(){
+    public void useGreatBall(){
         for(Card singleCard : deck){
             if(singleCard instanceof Charmander){
                 hand.add(singleCard);
@@ -195,7 +214,7 @@ public class CardGame
         }
     }
     //put card on field
-    public void onField(Card pokemon){
+    public void addToField(Card pokemon){
         if(onField == null){
             onField = pokemon;
             hand.remove(pokemon);
@@ -236,6 +255,31 @@ public class CardGame
         
         
     }
+    //add prize cards
+    public void addPrizeCards(){
+        Random rng = new Random();
+        
+        for(int i = 0; i<6; i++){
+            if(!isDeckEmpty()){
+                int cardToTakeIndex = rng.nextInt(deck.size());
+            
+                prizeCards.add(deck.get(cardToTakeIndex));
+                deck.remove(cardToTakeIndex);
+            }
+            
+            
+        }
+    }
+    //prize cards
+    public boolean havePrizeCards(){
+        if(prizeCards.size() == 0){
+            return false;
+        }
+        else{
+            return true;
+        }
+        
+    }
     //clear deck and hand
     public void clearDeck(){
         
@@ -248,14 +292,84 @@ public class CardGame
         //System.out.println("deck size"+ deck.size());
         //System.out.println("hand size" + hand.size());
     }
+    //start playing the game with user input
+    public void startGame(){
+        printHand();
+        printField();
+        //place pokemon in field
+        //add pokemon to field from hand
+        //addToField(new Charmander());
+        userInput();
+        
+        
+        
+    }
+    //check user input
+    public void userInput(){
+        //promt user with action
+        boolean endTurn = false;
+        
+        while(!endTurn){
+            int input;
+            if(onField == null){
+                System.out.println("Place a pokemon on the field.");
+                input = scanner.nextInt();
+                addToField(hand.get(input));
+                printField();
+            }
+            input = scanner.nextInt();
+            if(hand.get(input)  instanceof ProfessorsResearch){
+                useProfessorsResearch();
+            }
+            if(hand.get(input) instanceof GreatBall){
+                useGreatBall();
+            }
+            
+            if(hand.get(input) instanceof RareCandy){
+                useRareCandy();
+            }
+            System.out.println("To end turn type: true");
+            endTurn = scanner.nextBoolean();
+            checkIfLost();
+        }
+        
+    }
+    //check if you lost
+    public boolean checkIfLost(){
+        if(isDeckEmpty()){
+            System.out.println("You have lost your deck is empty!");
+            return true;
+        }
+        else if(onField == null){
+            if(!checkPokemon()){
+                System.out.println("You have lost you have no more pokemon to play!");
+                return true;
+            }
+        }
+        else if(!havePrizeCards()){
+            System.out.println("You have lost your are out of prize cards!");
+            return true;
+        }
+        else{
+            return false; 
+        }
+        return false;
+    }
     // add methods here as you need to, to make your program run.
     public void run(){
+        
         fillDeck();
+        addPrizeCards();
         //shuffle
         //draw hand
         drawHand();
-        //check if pokemon in hand
-        checkPokemon();
+        //check if pokemon in hand if not new hand unit you do.
+        while(!checkPokemon()){
+            newHand();
+        }
+        startGame();
+        
+        
         //check how many reshuffles will it take on avg
         
         
